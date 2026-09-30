@@ -17,4 +17,5 @@ json('package.json', (p) => (p.version = version));
 json('src-tauri/tauri.conf.json', (c) => (c.version = version));
 const cargo = readFileSync('src-tauri/Cargo.toml', 'utf8').replace(/^version = ".*"$/m, `version = "${version}"`);
 writeFileSync('src-tauri/Cargo.toml', cargo);
+writeFileSync('src/lib/version.ts', `// Updated by scripts/bump.mjs before every release.\nexport const APP_VERSION = '${version}';\n`);
 console.log(`Bumped to ${version}`);

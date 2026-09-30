@@ -218,8 +218,8 @@
 
 /* ---------- feed / log ---------- */
 .feed-panel { flex: none; height: 200px; }
-.feed { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
-.feed-row { display: flex; gap: 10px; align-items: baseline; padding: 2px 4px; white-space: nowrap; animation: rise 0.3s ease-out; }
+.feed { display: flex; flex-direction: column; gap: 2px; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-bottom: 4px; }
+.feed-row { flex-shrink: 0; display: flex; gap: 10px; align-items: baseline; padding: 2px 4px; white-space: nowrap; animation: rise 0.3s ease-out; }
 .feed-row:hover { background: var(--blue-soft); }
 .feed-row .t { color: var(--faint); flex: none; }
 .feed-row .dir { flex: none; font-weight: 700; }

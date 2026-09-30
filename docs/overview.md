@@ -148,3 +148,6 @@ Every 20 seconds the bridge upserts one `agents` row per CLI it found installed.
 - Agents run with the PC user's permissions. By default they have full access and no sandbox.
 - Plan usage is only as fresh as the CLI's last report.
 - Updates are downloaded from **public** GitHub release URLs. A private repo breaks auto-updates (see [releasing.md](releasing.md)).
+
+### Version labels and update timing
+The phone menu shows its own installed version. The desktop Node identity panel shows its own BUILD version. Both use a compiled constant updated by the release script, without extra network calls. Desktop Config shows the next scheduled update check countdown and the last attempt time, tracked locally for the current session. The transmission feed scrolls through loaded messages and follows new arrivals only while at the bottom.

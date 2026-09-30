@@ -3,6 +3,7 @@ import { agentLabel, isOnline, useNow } from '../lib/useConversation';
 import type { Agent, Chat, Node } from '../lib/types';
 import { MoreIcon, PlusIcon } from '../ui/icons';
 import { Reticle } from '../ui/Reticle';
+import { APP_VERSION } from '../lib/version';
 import { ago } from '../ui/time';
 
 const monogram = (name: string) => name.slice(0, 2).toUpperCase();
@@ -101,6 +102,7 @@ export function ChatList({
               <button onClick={() => { setMenu(false); onUsage(); }}>Usage</button>
               <button onClick={() => { setMenu(false); onCheckUpdates(); }}>Check for updates</button>
               <button className="danger" onClick={() => { setMenu(false); onSignOut(); }}>Sign out</button>
+              <div className="menu-meta">Neptune v{APP_VERSION}</div>
             </div>
           </>
         )}

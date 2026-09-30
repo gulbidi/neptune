@@ -1,6 +1,5 @@
-import { getVersion } from '@tauri-apps/api/app';
+import { APP_VERSION } from './version';
 import { GITHUB_REPO } from './config';
-import { inTauri } from './platform';
 
 export interface PhoneUpdate {
   version: string;
@@ -19,7 +18,7 @@ export function compareVersions(a: string, b: string) {
 }
 
 export async function appVersion() {
-  return inTauri() ? getVersion() : '0.0.0-dev';
+  return APP_VERSION;
 }
 
 /** Android can't self-update silently; we find the newest APK on GitHub Releases. */

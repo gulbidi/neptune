@@ -1,6 +1,6 @@
 [package]
 name = "neptune"
-version = "0.2.0"
+version = "0.3.0"
 description = "Neptune — message the coding agents on your PC from your phone"
 authors = ["gulbidi"]
 edition = "2021"

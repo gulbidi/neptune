@@ -1,3 +1,4 @@
+import { APP_VERSION } from '../src/lib/version';
 import { expect, test } from './fixtures';
 
 test.describe('phone app', () => {
@@ -59,6 +60,7 @@ test.describe('phone app', () => {
     }, chatId)).toBe(true);
     await page.getByRole('button', { name: 'Back to chats' }).click();
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    await expect(page.getByText(`Neptune v${APP_VERSION}`, { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Sign out', exact: true }).click();
     await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('neptune.accounts') || '[]'))).toEqual([email]);
     expect(supabaseCalls).toContain('/rest/v1/push_devices');

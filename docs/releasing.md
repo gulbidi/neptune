@@ -11,7 +11,7 @@ Releases are built by GitHub Actions (`.github/workflows/release.yml`) when a `v
 ```bash
 node scripts/bump.mjs X.Y.Z
 ```
-This updates the version in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+This updates the version in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml` and the shared `APP_VERSION` constant in `src/lib/version.ts`.
 
 ```bash
 git commit -am "Release X.Y.Z"

@@ -11,6 +11,7 @@ import { bridgeClient, ConfigStore, connect, loadNode } from './auth';
 import { Qr } from './Qr';
 import { fmtBytes, fmtUptime, useLatency, useTelemetry, type Telemetry } from './telemetry';
 import { CountdownRing, HexStream, Meter, Panel, Scramble, Spark, Spinner, Typewriter } from './widgets';
+import { APP_VERSION } from '../lib/version';
 import { appVersion } from '../lib/updates';
 import { inTauri } from '../lib/platform';
 import { isOnline, useChats, useConversation, useNow } from '../lib/useConversation';
@@ -45,7 +46,7 @@ export function BridgeApp() {
     // `npm run dev` + ?mode=bridge: render the console without a native side or a session (&pair: the pairing screen).
     if (!inTauri()) {
       const store = new ConfigStore(emptyConfig());
-      setBoot({ store, client: bridgeClient(store), host: { machine: 'PREVIEW', home: '', claudePath: null, codexPath: null }, version: 'dev' });
+      setBoot({ store, client: bridgeClient(store), host: { machine: 'PREVIEW', home: '', claudePath: null, codexPath: null }, version: APP_VERSION });
       const pairing = new URLSearchParams(location.search).has('pair');
       setNode(pairing ? null : { id: '00000000-0000-0000-0000-000000000000', name: 'Preview', operator_email: 'operator@example.com', agent_email: 'agent@example.com', machine: 'PREVIEW', created_at: '' });
       return;
@@ -193,6 +194,8 @@ function Console({ store, client, node, host, version, onUnpaired }: Boot & { no
   const [modal, setModal] = useState<'transmit' | 'config' | null>(null);
   const [autostart, setAutostart] = useState<boolean | null>(null);
   const [updateState, setUpdateState] = useState<string>('');
+  const [nextUpdateCheck, setNextUpdateCheck] = useState(() => Date.now() + UPDATE_CHECK_MS);
+  const [lastUpdateCheck, setLastUpdateCheck] = useState<number | null>(null);
   const [awake, setAwake] = useState(() => localStorage.getItem('neptune.awake') !== '0');
   const bootAt = useRef(Date.now());
 
@@ -225,18 +228,26 @@ function Console({ store, client, node, host, version, onUnpaired }: Boot & { no
   // Self-update: check on launch and every few hours; install when idle.
   useEffect(() => {
     let cancelled = false;
+    let checking = false;
     const run = async () => {
+      setNextUpdateCheck(Date.now() + UPDATE_CHECK_MS);
+      if (checking || cancelled) return;
+      checking = true;
       try {
+        setLastUpdateCheck(Date.now());
         setUpdateState('Checking for updates…');
         const update = await checkUpdate();
         if (cancelled) return;
         if (!update) return setUpdateState(`Up to date · checked ${clock(new Date().toISOString())}`);
-        while (engine.getSnapshot().busy) await new Promise((r) => setTimeout(r, 5000));
+        while (!cancelled && engine.getSnapshot().busy) await new Promise((r) => setTimeout(r, 5000));
+        if (cancelled) return;
         setUpdateState(`Installing v${update.version}…`);
         await update.downloadAndInstall();
         await relaunch();
       } catch (e) {
         if (!cancelled) setUpdateState(`Update check failed: ${String(e).slice(0, 80)}`);
+      } finally {
+        checking = false;
       }
     };
     run();
@@ -383,6 +394,9 @@ function Console({ store, client, node, host, version, onUnpaired }: Boot & { no
             awake={awake}
             setAwake={setAwake}
             updateState={updateState}
+            nextUpdateCheck={nextUpdateCheck}
+            lastUpdateCheck={lastUpdateCheck}
+            now={now}
             onUnpair={async () => {
               await engine.stop();
               await client.auth.signOut({ scope: 'local' }).catch(() => {});
@@ -652,10 +666,19 @@ const agentLabel = (m: Message, kindOf: (chatId: string) => string | null) => {
 };
 
 function Feed({ messages, kindOf }: { messages: Message[]; kindOf: (chatId: string) => string | null }) {
-  const rows = messages.filter((m) => m.body.trim() !== '/stop').slice(-9);
+  const rows = messages.filter((m) => m.body.trim() !== '/stop');
+  const ref = useRef<HTMLDivElement>(null);
+  const follow = useRef(true);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (el && follow.current) el.scrollTop = el.scrollHeight;
+  }, [messages]);
   if (!rows.length) return <div className="feed-empty"><Spinner size={14} tone="blue" /> Listening for transmissions…</div>;
   return (
-    <div className="feed">
+    <div className="feed" ref={ref} tabIndex={0} aria-label="Transmission feed messages" onScroll={() => {
+      const el = ref.current;
+      if (el) follow.current = el.scrollHeight - el.clientHeight - el.scrollTop < 24;
+    }}>
       {rows.map((m) => (
         <div key={m.id} className={`feed-row f-${m.sender}`}>
           <span className="t">{stamp(new Date(m.created_at))}</span>
@@ -741,6 +764,9 @@ function ConfigForm({
   awake,
   setAwake,
   updateState,
+  nextUpdateCheck,
+  lastUpdateCheck,
+  now,
   onUnpair,
 }: {
   engine: BridgeEngine;
@@ -751,6 +777,9 @@ function ConfigForm({
   awake: boolean;
   setAwake: (v: boolean) => void;
   updateState: string;
+  nextUpdateCheck: number;
+  lastUpdateCheck: number | null;
+  now: number;
   onUnpair: () => void;
 }) {
   const c = snap.config;
@@ -826,6 +855,8 @@ function ConfigForm({
           {confirmUnpair ? 'Sign out + re-pair?' : 'Re-pair this PC'}
         </button>
       </div>
+      <div className="setting inline"><span>Next update check</span><code>{new Date(Math.max(0, nextUpdateCheck - now)).toISOString().slice(11, 19)}</code></div>
+      <div className="setting inline"><span>Last update check</span><code>{lastUpdateCheck ? new Date(lastUpdateCheck).toLocaleString() : 'Not checked yet'}</code></div>
       <div className="update-line">{updateState}</div>
     </div>
   );
