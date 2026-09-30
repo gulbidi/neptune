@@ -41,7 +41,7 @@ Work directly on `prod`, the only branch. Every change is tested locally, pushed
    node scripts/bump.mjs X.Y.Z
    ```
    ```bash
-   git commit -a -F <message-file>   # subject: chore: release X.Y.Z
+   git commit -a -F <message-file>   # subject: [REL vX.Y.Z] chore: bumped version to X.Y.Z
    ```
    ```bash
    git tag vX.Y.Z
@@ -95,7 +95,7 @@ The second line names the AI agent that did the work, one of:
 - The first `Co-Authored-By` line is always `Nandanunni <asnqln@gmail.com>`.
 - When an AI agent (Claude or Codex) worked on the commit, add a second `Co-Authored-By` line for it. `<model>` is the model that actually did the work (e.g. `Opus 5.5`), so it changes with the model. Don't copy it from an old commit.
 - No other co-authors are added.
-- Release commits use `chore: release X.Y.Z`.
+- A release commit starts with `[REL vX.Y.Z]` before the type, e.g. `[REL v0.3.0] chore: bumped version to 0.3.0`. Other commits have no prefix.
 
 Example:
 
