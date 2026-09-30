@@ -88,19 +88,11 @@ Optional, only if the identity is changing:
 
 ## 5. Release checklist
 
-- [ ] The type check, frontend build and Rust check all pass. Run each of these:
-  ```bash
-  npx tsc --noEmit
-  ```
-  ```bash
-  npm run build
-  ```
-  ```bash
-  cd src-tauri && cargo check
-  ```
+- [ ] `npm run e2e` and `npm run verify` both pass on the final code ([testing.md](testing.md)).
+- [ ] The bump matches the change: patch for a fix or improvement, minor for a new feature, major for a huge upgrade ([AGENTS.md](../AGENTS.md#versioning)).
 - [ ] Any schema or edge-function changes are applied and deployed **and** work with the currently installed apps, or the release ships at the same time.
-- [ ] End-to-end flow tested with a test node (pair, sign in, task, reply, stop, remove).
-- [ ] Version bumped with `scripts/bump.mjs`. The tag matches the version.
+- [ ] Backend or protocol changes: end-to-end flow tested with a test node (pair, sign in, task, reply, stop, remove; testing.md §5).
+- [ ] Version bumped with `scripts/bump.mjs`. The tag matches the version, and `prod` is pushed before the tag.
 - [ ] After the release: the updater JSON reports the new version:
   ```bash
   curl -sL https://github.com/<owner>/<repo>/releases/latest/download/latest.json

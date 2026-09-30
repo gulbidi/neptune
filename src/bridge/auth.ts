@@ -89,10 +89,11 @@ export async function adoptServiceKey(store: ConfigStore, client: SupabaseClient
 export async function connect(store: ConfigStore, client: SupabaseClient, host: HostInfo, onWaiting: (why: string) => void): Promise<Node | null> {
   for (;;) {
     try {
-      let { data, error } = await client.auth.getSession();
+      const { data, error } = await client.auth.getSession();
       if (!data.session && error && isAuthRetryableFetchError(error)) throw error;
-      if (!data.session && (await adoptServiceKey(store, client, host))) ({ data } = await client.auth.getSession());
-      return data.session ? await loadNode(client) : null;
+      let session = data.session;
+      if (!session && (await adoptServiceKey(store, client, host))) session = (await client.auth.getSession()).data.session;
+      return session ? await loadNode(client) : null;
     } catch (e) {
       onWaiting(e instanceof Error ? e.message : String(e));
       await new Promise((r) => setTimeout(r, 5000));

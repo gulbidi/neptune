@@ -35,11 +35,15 @@ How the code is organized, how the parts talk to each other, and where to make c
 .
 ├── AGENTS.md / CLAUDE.md        Instructions for AI agents (CLAUDE.md just includes AGENTS.md)
 ├── README.md                    Short intro plus links into docs/
-├── docs/                        overview, architecture (this file), development, releasing
+├── docs/                        overview, architecture (this file), development, testing, releasing
 ├── index.html                   Vite entry HTML (dark theme-color, mounts #root)
-├── package.json                 JS deps and scripts (dev, build, tauri); version is kept in sync by scripts/bump.mjs
+├── package.json                 JS deps and scripts (dev, build, lint, test, e2e, verify, tauri); version is kept in sync by scripts/bump.mjs
 ├── vite.config.ts               Dev server on port 1420 (strict), ignores src-tauri, target es2021
 ├── tsconfig.json                Strict TS, noUnusedLocals/Parameters, bundler resolution, src/ only
+├── eslint.config.js             ESLint: JS + TypeScript recommended, classic React hook rules
+├── vitest.config.ts             Unit tests: src/**/*.test.ts, next to the code they cover
+├── playwright.config.ts         Live tests in the installed Chrome, headless; desktop and phone projects
+├── e2e/                         Playwright specs (bridge, phone) + fixtures.ts, which fakes Supabase
 ├── app-icon.svg                 Source for `tauri icon` (generates src-tauri/icons/**)
 ├── public/icon.svg              Favicon for the web preview
 ├── android/MainActivity.kt      Replaces the generated Android activity in CI (edge-to-edge insets, dark background)
@@ -54,7 +58,7 @@ How the code is organized, how the parts talk to each other, and where to make c
     └── functions/               Edge functions: request-code, pair (see §6)
 ```
 
-Git-ignored and generated: `node_modules/`, `dist/` (Vite output), `src-tauri/target/`, `src-tauri/gen/` (Tauri-generated schemas and Android project), keystores and `.env*`.
+Git-ignored and generated: `node_modules/`, `dist/` (Vite output), `test-results/` and `playwright-report/` (Playwright), `src-tauri/target/`, `src-tauri/gen/` (Tauri-generated schemas and Android project), keystores and `.env*`.
 
 ## 3. Frontend: `src/`
 
@@ -258,4 +262,5 @@ If you remove these, remove the Rust and TS config fields together, and check th
 | Schema or RLS change | A **new** migration file `supabase/migrations/YYYYMMDDHHMMSS_name.sql` (never edit applied ones) + update `src/lib/types.ts`; add new tables to the realtime publication if clients subscribe |
 | Server-side privileged action | New or changed edge function in `supabase/functions/<name>/index.ts`, called with `callFn` |
 | Backend project or repo coordinates | `src/lib/config.ts` (`SUPABASE_URL`, `SUPABASE_KEY`, `GITHUB_REPO`) + `tauri.conf.json` updater endpoint |
+| Tests | Unit: `<file>.test.ts` next to the code. Live: `e2e/bridge.spec.ts` or `e2e/phone.spec.ts`, with backend replies mocked in `e2e/fixtures.ts`. See [testing.md](testing.md) |
 | Theme | CSS variables at the top of `src/styles.css`; console styles in `src/bridge/ops.css` |

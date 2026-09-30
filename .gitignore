@@ -8,3 +8,5 @@ src-tauri/gen
 keystore.properties
 .env*
 supabase/.temp
+playwright-report
+test-results

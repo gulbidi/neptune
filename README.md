@@ -25,6 +25,12 @@ Browser preview at http://localhost:1420. Add `?mode=bridge` or `?mode=phone`:
 npm run dev
 ```
 
+Run all the checks (see docs/testing.md):
+
+```bash
+npm run e2e && npm run verify
+```
+
 Desktop bridge (read docs/development.md first):
 
 ```bash
@@ -47,5 +53,6 @@ The PC's agent CLIs must be signed in once: `claude auth login` for Claude Code,
 | [docs/overview.md](docs/overview.md) | What Neptune is, how it works, features, security model, tech stack |
 | [docs/architecture.md](docs/architecture.md) | Code layout, bridge engine, Tauri commands, database and RLS, edge functions, protocols |
 | [docs/development.md](docs/development.md) | Required tools and versions, configuration, running locally, Supabase workflow, conventions |
+| [docs/testing.md](docs/testing.md) | Check loop, unit tests (Vitest), live tests (Playwright + headless Chrome), lint |
 | [docs/releasing.md](docs/releasing.md) | CI releases, signing secrets, auto-updates, moving the repository |
 | [AGENTS.md](AGENTS.md) | Instructions for AI coding agents |

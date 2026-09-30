@@ -1,6 +1,6 @@
 # Neptune: development
 
-Tools, setup and day-to-day commands. For the code layout, see [architecture.md](architecture.md). For shipping, see [releasing.md](releasing.md).
+Tools, setup and day-to-day commands. For the code layout, see [architecture.md](architecture.md). For tests, see [testing.md](testing.md). For shipping, see [releasing.md](releasing.md).
 
 ---
 
@@ -13,6 +13,7 @@ Tools, setup and day-to-day commands. For the code layout, see [architecture.md]
 | Windows C++ toolchain | Visual Studio 2022 Build Tools, "Desktop development with C++" | Desktop build on Windows | Use the **MSVC** Rust toolchain (`stable-x86_64-pc-windows-msvc`), the same one CI uses. The `gnullvm` toolchain can compile, but linking the `cdylib` fails with a symbol-limit error |
 | WebView2 Runtime | Any recent | Running the desktop app | Preinstalled on Windows 11 |
 | Tauri CLI | 2.x (`@tauri-apps/cli` devDependency, currently 2.11) | `npx tauri …` | No global install needed |
+| Google Chrome | Any recent | Live tests (`npm run e2e`) | Playwright drives the installed Chrome; no browser download needed |
 | Git + GitHub CLI (`gh`) | Any recent | Releases, CI logs | `gh auth login` |
 | Supabase CLI | Latest (optional) | Applying migrations and deploying edge functions from the terminal | You can use the Supabase dashboard instead |
 | **Android only:** JDK | **17** (Temurin) | APK builds | Set `JAVA_HOME` |
@@ -59,21 +60,13 @@ cd <repo>
 npm ci
 ```
 
-Check that it compiles:
+Check that everything passes:
 
 ```bash
-npx tsc --noEmit
+npm run verify
 ```
 
-```bash
-npm run build
-```
-
-```bash
-cd src-tauri && cargo check
-```
-
-`cargo check` needs `dist/` to exist, because `tauri::generate_context!` embeds the frontend. Run `npm run build` first.
+`cargo check` (the last step of `verify`) needs `dist/` to exist, because `tauri::generate_context!` embeds the frontend. Run `npm run build` first.
 
 ## 4. Running locally
 
@@ -164,27 +157,23 @@ Pairing needs a signed-in operator, and an operator must already belong to a nod
 
 ## 6. Checks before committing
 
-There is no automated test suite or linter in the repo. Before committing, at minimum:
+Testing has its own guide: [testing.md](testing.md). In short, run each of these, in order:
 
 ```bash
-npx tsc --noEmit
+npm run e2e
 ```
+Live tests in headless Chrome.
 
 ```bash
-npm run build
+npm run verify
 ```
+Lint, unit tests, build and `cargo check`.
+
+If you change anything after `verify`, run `e2e` again. Backend or protocol changes also need the manual test-node run (testing.md §5). Fix Rust formatting with:
 
 ```bash
-cd src-tauri && cargo check
+cargo fmt --manifest-path src-tauri/Cargo.toml
 ```
-
-Also:
-- UI changes: look at `/?mode=bridge`, `/?mode=bridge&pair` and the phone view at phone width in `npm run dev`.
-- Backend or protocol changes: run the real flow end to end with a test node (pair → sign in → send a task → reply → `/stop` → remove).
-- Run the Rust side's formatter:
-  ```bash
-  cd src-tauri && cargo fmt
-  ```
 
 ## 7. Conventions
 

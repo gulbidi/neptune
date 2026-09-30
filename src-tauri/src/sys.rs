@@ -9,7 +9,10 @@ pub struct Sys(Mutex<(System, Networks)>);
 
 impl Default for Sys {
     fn default() -> Self {
-        Sys(Mutex::new((System::new(), Networks::new_with_refreshed_list())))
+        Sys(Mutex::new((
+            System::new(),
+            Networks::new_with_refreshed_list(),
+        )))
     }
 }
 
@@ -39,7 +42,9 @@ pub fn sys_stats(state: State<'_, Sys>) -> SysStats {
     sys.refresh_memory();
     sys.refresh_processes_specifics(ProcessesToUpdate::All, true, ProcessRefreshKind::nothing());
     nets.refresh(true);
-    let (rx, tx) = nets.iter().fold((0, 0), |(r, t), (_, n)| (r + n.received(), t + n.transmitted()));
+    let (rx, tx) = nets.iter().fold((0, 0), |(r, t), (_, n)| {
+        (r + n.received(), t + n.transmitted())
+    });
     SysStats {
         cpu: sys.global_cpu_usage(),
         cores: sys.cpus().iter().map(|c| c.cpu_usage()).collect(),
@@ -59,8 +64,14 @@ pub fn sys_stats(state: State<'_, Sys>) -> SysStats {
 pub fn keep_awake(on: bool) {
     #[cfg(windows)]
     unsafe {
-        use windows_sys::Win32::System::Power::{SetThreadExecutionState, ES_CONTINUOUS, ES_DISPLAY_REQUIRED, ES_SYSTEM_REQUIRED};
-        SetThreadExecutionState(if on { ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED } else { ES_CONTINUOUS });
+        use windows_sys::Win32::System::Power::{
+            SetThreadExecutionState, ES_CONTINUOUS, ES_DISPLAY_REQUIRED, ES_SYSTEM_REQUIRED,
+        };
+        SetThreadExecutionState(if on {
+            ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED
+        } else {
+            ES_CONTINUOUS
+        });
     }
     #[cfg(not(windows))]
     let _ = on;

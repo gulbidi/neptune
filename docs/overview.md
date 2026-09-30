@@ -128,6 +128,7 @@ Every 20 seconds the bridge upserts one `agents` row per CLI it found installed.
 | Native (Rust) | `tokio` (process spawning and streaming), `sysinfo` (telemetry), `windows-sys` (keep awake), `serde_json` |
 | Backend | Supabase: Postgres with RLS, Realtime (`postgres_changes`), Auth (email OTP, minted server-side), Edge Functions (Deno) |
 | Agents | Claude Code CLI, OpenAI Codex CLI |
+| Testing | Vitest (unit), Playwright with headless Chrome (live), ESLint + `cargo fmt` (lint) |
 | CI/CD | GitHub Actions (`.github/workflows/release.yml`); `tauri-action` builds Windows, the Tauri Android CLI builds the APK |
 
 ## 8. Visual language

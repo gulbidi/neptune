@@ -54,7 +54,9 @@ fn config_path(app: &AppHandle) -> Result<PathBuf, String> {
 pub async fn load_config(app: AppHandle) -> Result<BridgeConfig, String> {
     let path = config_path(&app)?;
     match tokio::fs::read_to_string(&path).await {
-        Ok(text) => serde_json::from_str(&text).map_err(|e| format!("Invalid {}: {e}", path.display())),
+        Ok(text) => {
+            serde_json::from_str(&text).map_err(|e| format!("Invalid {}: {e}", path.display()))
+        }
         Err(_) => Ok(BridgeConfig::default()),
     }
 }
@@ -63,10 +65,14 @@ pub async fn load_config(app: AppHandle) -> Result<BridgeConfig, String> {
 pub async fn save_config(app: AppHandle, config: BridgeConfig) -> Result<(), String> {
     let path = config_path(&app)?;
     if let Some(dir) = path.parent() {
-        tokio::fs::create_dir_all(dir).await.map_err(|e| e.to_string())?;
+        tokio::fs::create_dir_all(dir)
+            .await
+            .map_err(|e| e.to_string())?;
     }
     let text = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
-    tokio::fs::write(&path, text).await.map_err(|e| e.to_string())
+    tokio::fs::write(&path, text)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[derive(Serialize)]
@@ -86,7 +92,11 @@ fn version_key(name: &str) -> Vec<u64> {
 fn newest_in(dir: PathBuf) -> Option<PathBuf> {
     let mut best: Option<(Vec<u64>, PathBuf)> = None;
     for entry in std::fs::read_dir(dir).ok()?.flatten() {
-        let exe = entry.path().join(if cfg!(windows) { "claude.exe" } else { "claude" });
+        let exe = entry.path().join(if cfg!(windows) {
+            "claude.exe"
+        } else {
+            "claude"
+        });
         if !exe.is_file() {
             continue;
         }
@@ -101,8 +111,14 @@ fn newest_in(dir: PathBuf) -> Option<PathBuf> {
 /// Finds a Claude Code CLI: standalone install, PATH, or the copy bundled
 /// with the Claude desktop app (including its MSIX-virtualized location).
 fn find_claude() -> Option<PathBuf> {
-    let exe = if cfg!(windows) { "claude.exe" } else { "claude" };
-    let home = std::env::var_os("USERPROFILE").or_else(|| std::env::var_os("HOME")).map(PathBuf::from);
+    let exe = if cfg!(windows) {
+        "claude.exe"
+    } else {
+        "claude"
+    };
+    let home = std::env::var_os("USERPROFILE")
+        .or_else(|| std::env::var_os("HOME"))
+        .map(PathBuf::from);
     if let Some(h) = &home {
         let p = h.join(".local").join("bin").join(exe);
         if p.is_file() {
@@ -126,7 +142,13 @@ fn find_claude() -> Option<PathBuf> {
         if let Ok(entries) = std::fs::read_dir(&packages) {
             for e in entries.flatten() {
                 if e.file_name().to_string_lossy().starts_with("Claude_") {
-                    roots.push(e.path().join("LocalCache").join("Roaming").join("Claude").join("claude-code"));
+                    roots.push(
+                        e.path()
+                            .join("LocalCache")
+                            .join("Roaming")
+                            .join("Claude")
+                            .join("claude-code"),
+                    );
                 }
             }
         }
@@ -143,7 +165,11 @@ fn find_below(dir: &Path, name: &str, depth: u32) -> Option<PathBuf> {
     if depth == 0 {
         return None;
     }
-    std::fs::read_dir(dir).ok()?.flatten().filter(|e| e.path().is_dir()).find_map(|e| find_below(&e.path(), name, depth - 1))
+    std::fs::read_dir(dir)
+        .ok()?
+        .flatten()
+        .filter(|e| e.path().is_dir())
+        .find_map(|e| find_below(&e.path(), name, depth - 1))
 }
 
 /// Finds the Codex CLI. Prefers the native binary inside the npm package over the
@@ -170,8 +196,14 @@ fn find_codex() -> Option<PathBuf> {
             return Some(p);
         }
     }
-    if let Some(h) = std::env::var_os("USERPROFILE").or_else(|| std::env::var_os("HOME")).map(PathBuf::from) {
-        for p in [h.join(".local").join("bin").join(exe), h.join(".cargo").join("bin").join(exe)] {
+    if let Some(h) = std::env::var_os("USERPROFILE")
+        .or_else(|| std::env::var_os("HOME"))
+        .map(PathBuf::from)
+    {
+        for p in [
+            h.join(".local").join("bin").join(exe),
+            h.join(".cargo").join("bin").join(exe),
+        ] {
             if p.is_file() {
                 return Some(p);
             }
@@ -190,7 +222,11 @@ fn find_codex() -> Option<PathBuf> {
 
 /// Codex session logs: `$CODEX_HOME/sessions/YYYY/MM/DD/rollout-…-<thread>.jsonl`.
 fn find_rollout(dir: &Path, thread: &str, depth: u32) -> Option<PathBuf> {
-    let mut entries: Vec<_> = std::fs::read_dir(dir).ok()?.flatten().map(|e| e.path()).collect();
+    let mut entries: Vec<_> = std::fs::read_dir(dir)
+        .ok()?
+        .flatten()
+        .map(|e| e.path())
+        .collect();
     // Newest first: the thread was just used.
     entries.sort_by(|a, b| b.cmp(a));
     for p in entries {
@@ -200,7 +236,10 @@ fn find_rollout(dir: &Path, thread: &str, depth: u32) -> Option<PathBuf> {
                     return Some(found);
                 }
             }
-        } else if p.file_name().is_some_and(|n| n.to_string_lossy().contains(thread)) {
+        } else if p
+            .file_name()
+            .is_some_and(|n| n.to_string_lossy().contains(thread))
+        {
             return Some(p);
         }
     }
@@ -210,16 +249,25 @@ fn find_rollout(dir: &Path, thread: &str, depth: u32) -> Option<PathBuf> {
 /// The last `rate_limits` Codex logged for a thread (its plan usage), if any.
 #[tauri::command]
 pub async fn codex_rate_limits(thread_id: String) -> Option<Value> {
-    let home = std::env::var_os("CODEX_HOME").map(PathBuf::from).or_else(|| {
-        std::env::var_os("USERPROFILE").or_else(|| std::env::var_os("HOME")).map(|h| PathBuf::from(h).join(".codex"))
-    })?;
+    let home = std::env::var_os("CODEX_HOME")
+        .map(PathBuf::from)
+        .or_else(|| {
+            std::env::var_os("USERPROFILE")
+                .or_else(|| std::env::var_os("HOME"))
+                .map(|h| PathBuf::from(h).join(".codex"))
+        })?;
     let file = find_rollout(&home.join("sessions"), &thread_id, 3)?;
     let text = tokio::fs::read_to_string(file).await.ok()?;
-    text.lines().rev().filter(|l| l.contains("rate_limits")).find_map(|l| {
-        let v: Value = serde_json::from_str(l).ok()?;
-        let limits = v.pointer("/payload/rate_limits").or_else(|| v.get("rate_limits"))?;
-        (!limits.is_null()).then(|| limits.clone())
-    })
+    text.lines()
+        .rev()
+        .filter(|l| l.contains("rate_limits"))
+        .find_map(|l| {
+            let v: Value = serde_json::from_str(l).ok()?;
+            let limits = v
+                .pointer("/payload/rate_limits")
+                .or_else(|| v.get("rate_limits"))?;
+            (!limits.is_null()).then(|| limits.clone())
+        })
 }
 
 #[tauri::command]
@@ -227,7 +275,9 @@ pub fn host_info() -> HostInfo {
     let machine = std::env::var("COMPUTERNAME")
         .or_else(|_| std::env::var("HOSTNAME"))
         .unwrap_or_else(|_| "this PC".into());
-    let home = std::env::var("USERPROFILE").or_else(|_| std::env::var("HOME")).unwrap_or_default();
+    let home = std::env::var("USERPROFILE")
+        .or_else(|_| std::env::var("HOME"))
+        .unwrap_or_default();
     HostInfo {
         machine,
         home,
@@ -235,7 +285,6 @@ pub fn host_info() -> HostInfo {
         codex_path: find_codex().map(|p| p.to_string_lossy().into_owned()),
     }
 }
-
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -265,7 +314,11 @@ pub struct RunResult {
 
 /// Runs an agent CLI and emits each JSON line it prints as an `agent-event`.
 #[tauri::command]
-pub async fn run_agent(app: AppHandle, runs: State<'_, Runs>, args: RunArgs) -> Result<RunResult, String> {
+pub async fn run_agent(
+    app: AppHandle,
+    runs: State<'_, Runs>,
+    args: RunArgs,
+) -> Result<RunResult, String> {
     let mut cmd = Command::new(&args.program);
     cmd.args(&args.args)
         .current_dir(&args.cwd)
@@ -276,11 +329,16 @@ pub async fn run_agent(app: AppHandle, runs: State<'_, Runs>, args: RunArgs) -> 
     #[cfg(windows)]
     cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
 
-    let mut child = cmd.spawn().map_err(|e| format!("Could not start {}: {e}", args.program))?;
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("Could not start {}: {e}", args.program))?;
 
     let mut stdin = child.stdin.take().ok_or("no stdin")?;
     if let Some(input) = &args.stdin {
-        stdin.write_all(input.as_bytes()).await.map_err(|e| e.to_string())?;
+        stdin
+            .write_all(input.as_bytes())
+            .await
+            .map_err(|e| e.to_string())?;
     }
     drop(stdin);
 
@@ -293,7 +351,10 @@ pub async fn run_agent(app: AppHandle, runs: State<'_, Runs>, args: RunArgs) -> 
     });
 
     let cancel = Arc::new(Notify::new());
-    runs.0.lock().await.insert(args.run_id.clone(), cancel.clone());
+    runs.0
+        .lock()
+        .await
+        .insert(args.run_id.clone(), cancel.clone());
 
     let mut lines = BufReader::new(stdout).lines();
     let mut cancelled = false;
@@ -317,7 +378,11 @@ pub async fn run_agent(app: AppHandle, runs: State<'_, Runs>, args: RunArgs) -> 
     let status = child.wait().await.ok();
     runs.0.lock().await.remove(&args.run_id);
     let stderr = stderr_task.await.unwrap_or_default();
-    Ok(RunResult { exit_code: status.and_then(|s| s.code()), stderr, cancelled })
+    Ok(RunResult {
+        exit_code: status.and_then(|s| s.code()),
+        stderr,
+        cancelled,
+    })
 }
 
 #[tauri::command]
