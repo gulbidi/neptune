@@ -1,6 +1,15 @@
 export type Sender = 'user' | 'agent' | 'system';
 export type MessageStatus = 'sent' | 'queued' | 'processing' | 'done' | 'error' | 'cancelled';
 
+/** An Android installation registered by one signed-in operator account. */
+export interface PushDevice {
+  id: string;
+  user_id: string;
+  installation_id: string;
+  token: string;
+  updated_at: string;
+}
+
 export interface MessageMeta {
   agent?: string;
   cost_usd?: number;

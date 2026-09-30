@@ -43,6 +43,12 @@ The workflow runs these jobs:
 3. **android** (`ubuntu-latest`): Node 24, JDK 17, Rust with the `aarch64-linux-android` target, and the NDK found on the runner. It runs `tauri android init --ci`, then `scripts/prepare-android.mjs` (copies the activity and icons, patches signing). It writes `keystore.properties` from secrets, runs `tauri android build --apk --target aarch64`, and uploads `Neptune_X.Y.Z_android.apk`.
 4. **publish:** takes the release out of draft and marks it **latest**.
 
+Android push builds also require the verified public Firebase client config at
+`android/google-services.json`. The preparation script installs the native FCM
+receiver and dependencies. Firebase private keys belong only in Supabase secrets.
+Provision and test the backend before tagging a push-enabled app release; see
+[push-notifications.md](push-notifications.md).
+
 The whole run takes about 10 minutes. A failed job leaves the release as a draft, so installed apps never see a half-published release. After fixing the problem, rerun the workflow or push the tag again.
 
 ## 2. How installed apps update

@@ -89,6 +89,9 @@ Every 20 seconds the bridge upserts one `agents` row per CLI it found installed.
 - **Pair a PC** and **sign in** by scanning a QR code with the camera, or typing the code.
 - **Update banner** that downloads the newest APK from GitHub Releases.
 - Markdown rendering for replies, and Android back-button navigation.
+- Native FCM push notifications for agent/system replies while the Android app is
+  closed. Notification taps open the matching account and chat. See
+  [push-notifications.md](push-notifications.md) for setup and Android limits.
 
 ### Bridge (Windows)
 - Runs in the tray, starts at login (`--minimized`), and allows only one copy at a time. Closing the window hides it.

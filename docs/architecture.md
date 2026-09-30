@@ -253,6 +253,16 @@ If you remove these, remove the Rust and TS config fields together, and check th
 
 ## 9. Where to make common changes
 
+### Android push delivery
+
+`src/phone/push.ts` registers tokens and handles notification taps through the
+Rust wrappers in `src-tauri/src/push.rs` and Kotlin in `android/PushPlugin.kt`.
+`android/PushNotifications.kt` receives FCM foreground messages; Android displays
+background notifications. `push_devices` stores per-account registrations and
+`push_deliveries` is a durable queue, drained by `supabase/functions/send-push`.
+The reply trigger wakes the sender, with cron providing retries. See
+[push-notifications.md](push-notifications.md) for security, lifecycle and setup.
+
 | Change | Where |
 | --- | --- |
 | Add a coding agent | New `AgentAdapter` in `src/bridge/agents.ts` + add it to `ADAPTERS`; CLI detection in `bridge.rs` (`find_*`, `HostInfo`) and `native.ts` (`HostInfo`); path and model fields in `BridgeConfig` (Rust + TS) and `ConfigForm` |

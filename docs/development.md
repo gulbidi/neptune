@@ -126,6 +126,10 @@ This runs on a connected device or emulator with hot reload.
 
 ## 5. Supabase
 
+Android FCM setup, its server-only credentials, and the push migration are covered
+in [push-notifications.md](push-notifications.md). The Android build requires the
+real `android/google-services.json`; the separate Android check uses a fake fixture.
+
 - Project URL and publishable key are in `src/lib/config.ts`. There's no `supabase/config.toml`, and nothing runs against a local Supabase stack. Development uses the hosted project.
 - **Migrations:** add a new file `supabase/migrations/YYYYMMDDHHMMSS_description.sql`. Never edit one that has already been applied. Apply it with `supabase link --project-ref <ref>`, then `supabase db push`, or paste it into the SQL editor. After a schema change, update `src/lib/types.ts`. If clients subscribe to a new table, add it to the `supabase_realtime` publication.
 - **Edge functions:** deploy **without JWT verification**:

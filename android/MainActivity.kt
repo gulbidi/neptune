@@ -11,6 +11,16 @@ import androidx.core.view.WindowInsetsCompat
 // Copied over the Tauri-generated activity in CI. Keeps the dark UI clear of the
 // status bar, navigation bar and keyboard on edge-to-edge Android (15+).
 class MainActivity : TauriActivity() {
+  override fun onResume() {
+    super.onResume()
+    PushNotifications.foreground = true
+  }
+
+  override fun onPause() {
+    PushNotifications.foreground = false
+    super.onPause()
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge(
       statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),

@@ -13,6 +13,7 @@ import { agentLabel, useChats } from '../lib/useConversation';
 import { checkPhoneUpdate, type PhoneUpdate } from '../lib/updates';
 import { openExternal } from '../lib/open';
 import type { Chat, Message } from '../lib/types';
+import { allowPushRegistration, setPushContext, unregisterPush, usePush, usesNativePush, type PushTarget } from './push';
 
 export function PhoneApp() {
   const [accounts, setAccounts] = useState<string[]>(() => {
@@ -25,6 +26,7 @@ export function PhoneApp() {
   });
   const [adding, setAdding] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [pushTarget, setPushTarget] = useState<PushTarget | null>(null);
 
   useEffect(() => {
     if (!toast) return;
@@ -33,6 +35,7 @@ export function PhoneApp() {
   }, [toast]);
 
   const use = useCallback((email: string) => {
+    allowPushRegistration(email);
     saveAccounts([...listAccounts(), email]);
     setActiveAccount(email);
     setAccounts(listAccounts());
@@ -41,10 +44,27 @@ export function PhoneApp() {
   }, []);
 
   const forget = useCallback(async (email: string) => {
-    await forgetAccount(email);
-    setAccounts(listAccounts());
-    setActive(activeAccount());
+    // signOut emits SIGNED_OUT after forgetAccount has already removed this account.
+    if (!listAccounts().includes(email)) return;
+    try {
+      await unregisterPush(email);
+      await forgetAccount(email);
+      setAccounts(listAccounts());
+      setActive(activeAccount());
+      setPushContext(null, null);
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : 'Could not sign out.');
+    }
   }, []);
+
+  const openPush = useCallback((target: PushTarget) => {
+    setActiveAccount(target.email);
+    setActive(target.email);
+    setAdding(false);
+    setPushTarget(target);
+  }, []);
+  const pushHandled = useCallback(() => setPushTarget(null), []);
+  usePush(accounts, openPush, setToast);
 
   const others = accounts.filter((a) => a !== active);
 
@@ -63,6 +83,8 @@ export function PhoneApp() {
             onAccountAdded={use}
             onSignOut={() => forget(active)}
             onToast={setToast}
+            pushTarget={pushTarget?.email === active ? pushTarget : null}
+            onPushHandled={pushHandled}
           />
         </ClientContext.Provider>
       )}
@@ -83,6 +105,8 @@ type AccountProps = {
   onAccountAdded: (email: string) => void;
   onSignOut: () => void;
   onToast: (text: string) => void;
+  pushTarget: PushTarget | null;
+  onPushHandled: () => void;
 };
 
 /** Waits for the account's stored session; a lost session signs the account out. */
@@ -111,6 +135,7 @@ function Account(props: AccountProps) {
 /** Other signed-in accounts still notify when their agents reply. */
 function BackgroundAccount({ email }: { email: string }) {
   useEffect(() => {
+    if (usesNativePush()) return;
     const client = clientFor(email);
     const since = Date.now();
     const channel = client
@@ -132,7 +157,7 @@ type NavState = { chat?: string; usage?: boolean; pair?: boolean } | null;
 type View = 'list' | 'usage' | 'pair';
 
 /** Chat list ⇄ chat / usage / pairing. Opening one pushes a history entry so Android's back button returns to the list. */
-function Home({ session, email, others, onSwitch, onAddAccount, onAccountAdded, onSignOut, onToast }: AccountProps & { session: Session }) {
+function Home({ session, email, others, onSwitch, onAddAccount, onAccountAdded, onSignOut, onToast, pushTarget, onPushHandled }: AccountProps & { session: Session }) {
   const client = useClient();
   const [openId, setOpenId] = useState<string | null>(null);
   const [view, setView] = useState<View>('list');
@@ -142,6 +167,7 @@ function Home({ session, email, others, onSwitch, onAddAccount, onAccountAdded, 
   openRef.current = openId;
 
   const { chats, agents, nodes, loaded, live, putChat, refresh } = useChats(client, (m: Message) => {
+    if (usesNativePush()) return;
     if (m.sender === 'user') return;
     if (Date.parse(m.created_at) < startedAt.current) return;
     if (document.visibilityState === 'visible' && openRef.current === m.chat_id) return;
@@ -149,6 +175,26 @@ function Home({ session, email, others, onSwitch, onAddAccount, onAccountAdded, 
     const agent = agents.find((a) => a.id === chat?.agent_id);
     notify(m.sender === 'agent' ? agentLabel(agent, nodes) : 'Neptune', m.body);
   });
+
+  useEffect(() => {
+    setPushContext(email, view === 'list' ? openId : null);
+    return () => setPushContext(null, null);
+  }, [email, openId, view]);
+
+  useEffect(() => {
+    if (!pushTarget) return;
+    let disposed = false;
+    client.from('chats').select('*').eq('id', pushTarget.chatId).maybeSingle().then(({ data, error }) => {
+      if (disposed) return;
+      onPushHandled();
+      if (error || !data) return onToast('This chat is no longer available.');
+      putChat(data as Chat);
+      history.pushState({ chat: data.id }, '');
+      setView('list');
+      setOpenId(data.id);
+    });
+    return () => { disposed = true; };
+  }, [client, pushTarget, putChat, onToast, onPushHandled]);
 
   useEffect(() => {
     ensureNotifyPermission();

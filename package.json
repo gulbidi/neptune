@@ -33,6 +33,7 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
     "@tauri-apps/cli": "^2.11.5",

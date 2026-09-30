@@ -28,6 +28,13 @@ Every change goes through these steps, in this order:
 
 ## 2. Unit tests (Vitest)
 
+Push tests also use PGlite (embedded Postgres) to apply the actual push migration
+with network, Vault and cron stand-ins. These verify authorization and queue
+behavior without touching Supabase. Check the Edge Function separately with
+`npx deno check supabase/functions/send-push/index.ts`. The `Android check` workflow
+compiles native code without publishing. On-device push checks are listed in
+[push-notifications.md](push-notifications.md).
+
 - **What they cover:** pure logic with no DOM, network or Tauri. Examples are QR parsing (`src/lib/config.ts`), version comparison (`src/lib/updates.ts`), presence and labels (`src/lib/useConversation.ts`), time formatting (`src/ui/time.ts`), agent usage and tool descriptions (`src/bridge/agents.ts`), and telemetry formatting (`src/bridge/telemetry.ts`).
 - **Where they live:** next to the code, as `src/**/<file>.test.ts`. Config is in `vitest.config.ts`, running in the `node` environment.
 - **Run them:** `npm run test`, or `npm run test:watch` while working. Run a single file with `npx vitest run src/lib/config.test.ts`.
@@ -77,7 +84,10 @@ Every change goes through these steps, in this order:
   - Find elements the way a user would: `getByRole`, `getByText`, `getByPlaceholder`.
   - If a flow needs a new backend response, add it to the router in `fixtures.ts` rather than letting the request through.
   - Check `pageerror` for screens that shouldn't throw.
-- **Limits:** the browser has no Tauri side. There's no camera for QR scanning, no agent CLIs and no signed-in session, so screens after sign-in can't be reached yet. Cover those with unit tests and the manual run (§5).
+- **Limits:** the browser has no real Tauri side, camera or agent CLI. The push
+  navigation test seeds fake sessions and mocks native commands to cover signed-in
+  screens; it cannot prove Android background delivery. Verify that on a phone
+  with FCM configured, as described in [push-notifications.md](push-notifications.md).
 
 ## 4. Lint
 

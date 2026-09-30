@@ -1,4 +1,5 @@
 mod bridge;
+mod push;
 mod sys;
 
 #[cfg(desktop)]
@@ -84,6 +85,11 @@ pub fn run() {
         builder = builder.plugin(tauri_plugin_barcode_scanner::init());
     }
 
+    #[cfg(target_os = "android")]
+    {
+        builder = builder.plugin(push::init());
+    }
+
     builder
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
@@ -98,6 +104,9 @@ pub fn run() {
             bridge::run_agent,
             bridge::cancel_agent,
             bridge::codex_rate_limits,
+            push::push_token,
+            push::push_context,
+            push::push_open,
             sys::sys_stats,
             sys::keep_awake,
         ])
