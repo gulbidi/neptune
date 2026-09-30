@@ -12,3 +12,4 @@ playwright-report
 test-results
 android/google-services.json
 *service-account*.json
+firebase-debug.log*

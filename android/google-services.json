@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "515886307954",
+    "project_id": "gulbidi-neptune",
+    "storage_bucket": "gulbidi-neptune.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:515886307954:android:1000090b4b38e1c08d40eb",
+        "android_client_info": {
+          "package_name": "com.gulbidi.neptune"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADmqYBVhr6quVQXWEN8rTXgskFed_6Sk8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

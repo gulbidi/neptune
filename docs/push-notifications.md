@@ -88,3 +88,19 @@ builds can likewise use `node scripts/prepare-android.mjs --unsigned`.
 - Actual phone verification requires the provisioned Firebase project and updated
   APK: foreground, open chat suppression, background, locked screen, Recents dismissal,
   notification tap, multiple accounts and sign-out.
+
+## Production configuration
+
+Firebase project `gulbidi-neptune` serves Android package `com.gulbidi.neptune`.
+The committed client configuration identifies that project. The dedicated
+`neptune-push` service account has only the Firebase Cloud Messaging API Admin
+role; its private key is held outside the repository and in Supabase secrets.
+The push migration, sender and Vault configuration are deployed to the existing
+Supabase project `pqjmspieosgrqyrgfrqx`.
+
+Live integration checks exercised throwaway pairing and OTP sign-in, task/reply
+and stop database transitions, operator registration, token RLS, reply fan-out,
+sender authentication and Firebase OAuth, and unregister cascade cleanup. They
+emulated bridge protocol calls rather than launching an agent CLI. The throwaway
+nodes and users were deleted. These checks do not establish physical Android
+background delivery; verify that after installing the updated signed APK.
