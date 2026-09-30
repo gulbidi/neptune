@@ -27,10 +27,17 @@ copyFileSync(firebasePath, join(gen, 'app/google-services.json'));
 
 const rootGradlePath = join(gen, 'build.gradle.kts');
 let rootGradle = readFileSync(rootGradlePath, 'utf8');
-if (!rootGradle.includes('com.google.gms.google-services')) {
-  rootGradle = rootGradle.replace(/plugins\s*\{/, 'plugins {\n    id("com.google.gms.google-services") version "4.5.0" apply false');
+if (!rootGradle.includes('com.google.gms.google-services') && !rootGradle.includes('com.google.gms:google-services')) {
+  if (/plugins\s*\{/.test(rootGradle)) {
+    rootGradle = rootGradle.replace(/plugins\s*\{/, 'plugins {\n    id("com.google.gms.google-services") version "4.5.0" apply false');
+  } else {
+    // Tauri's generated root uses buildscript/classpath rather than a plugins block.
+    rootGradle = rootGradle.replace(/dependencies\s*\{/, 'dependencies {\n        classpath("com.google.gms:google-services:4.5.0")');
+  }
 }
-if (!rootGradle.includes('com.google.gms.google-services')) throw new Error('Could not add Google Services to root Gradle plugins.');
+if (!rootGradle.includes('com.google.gms.google-services') && !rootGradle.includes('com.google.gms:google-services')) {
+  throw new Error('Could not add Google Services to root Gradle plugins.');
+}
 writeFileSync(rootGradlePath, rootGradle);
 
 const manifestPath = join(gen, 'app/src/main/AndroidManifest.xml');
