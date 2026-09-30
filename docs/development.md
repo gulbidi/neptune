@@ -8,7 +8,7 @@ Tools, setup and day-to-day commands. For the code layout, see [architecture.md]
 
 | Tool | Version | Needed for | Notes |
 | --- | --- | --- | --- |
-| Node.js + npm | **22+** (CI uses 22; also works on 24) | Everything | `npm ci` uses `package-lock.json` |
+| Node.js + npm | **24** (CI uses 24; 22+ also works) | Everything | `npm ci` uses `package-lock.json` |
 | Rust (rustup) | **stable**, 1.85 or newer (edition 2021; recently built with 1.98) | Desktop and Android builds | `rustup default stable` |
 | Windows C++ toolchain | Visual Studio 2022 Build Tools, "Desktop development with C++" | Desktop build on Windows | Use the **MSVC** Rust toolchain (`stable-x86_64-pc-windows-msvc`), the same one CI uses. The `gnullvm` toolchain can compile, but linking the `cdylib` fails with a symbol-limit error |
 | WebView2 Runtime | Any recent | Running the desktop app | Preinstalled on Windows 11 |

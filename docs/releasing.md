@@ -39,8 +39,8 @@ gh run watch
 
 The workflow runs these jobs:
 1. **create-release:** finds or creates a **draft** GitHub release for the tag.
-2. **windows** (`windows-latest`): Node 22, Rust stable (MSVC), `npm ci`, then `tauri-action` builds the NSIS installer. It signs the updater artifacts and uploads `Neptune_X.Y.Z_x64-setup.exe`, its `.sig`, and `latest.json` (preferring NSIS).
-3. **android** (`ubuntu-latest`): JDK 17, Rust with the `aarch64-linux-android` target, and the NDK found on the runner. It runs `tauri android init --ci`, then `scripts/prepare-android.mjs` (copies the activity and icons, patches signing). It writes `keystore.properties` from secrets, runs `tauri android build --apk --target aarch64`, and uploads `Neptune_X.Y.Z_android.apk`.
+2. **windows** (`windows-latest`): Node 24, Rust stable (MSVC), `npm ci`, then `tauri-action` builds the NSIS installer. It signs the updater artifacts and uploads `Neptune_X.Y.Z_x64-setup.exe`, its `.sig`, and `latest.json` (preferring NSIS).
+3. **android** (`ubuntu-latest`): Node 24, JDK 17, Rust with the `aarch64-linux-android` target, and the NDK found on the runner. It runs `tauri android init --ci`, then `scripts/prepare-android.mjs` (copies the activity and icons, patches signing). It writes `keystore.properties` from secrets, runs `tauri android build --apk --target aarch64`, and uploads `Neptune_X.Y.Z_android.apk`.
 4. **publish:** takes the release out of draft and marks it **latest**.
 
 The whole run takes about 10 minutes. A failed job leaves the release as a draft, so installed apps never see a half-published release. After fixing the problem, rerun the workflow or push the tag again.
