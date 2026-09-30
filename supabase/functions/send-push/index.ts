@@ -61,7 +61,7 @@ async function deliver(row: Delivery, account: ServiceAccount, token: string) {
   try {
     const [device, reply] = await Promise.all([
       database.from('push_devices').select('token').eq('id', row.device_id).maybeSingle(),
-      database.from('messages').select('id, body, chat_id, created_at, sender, nodes!inner(operator_email, name), chats!inner(agents!inner(name))')
+      database.from('messages').select('id, body, chat_id, created_at, sender, nodes!inner(operator_email, name), chats!inner(agents!chats_agent_id_fkey!inner(name))')
         .eq('id', row.message_id).maybeSingle(),
     ]);
     if (device.error || reply.error) throw new Error('Could not read push delivery');

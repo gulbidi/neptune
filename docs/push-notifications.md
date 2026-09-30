@@ -104,3 +104,9 @@ sender authentication and Firebase OAuth, and unregister cascade cleanup. They
 emulated bridge protocol calls rather than launching an agent CLI. The throwaway
 nodes and users were deleted. These checks do not establish physical Android
 background delivery; verify that after installing the updated signed APK.
+
+The sender selects the chat's agent with the explicit `chats_agent_id_fkey`
+relationship. `agents.current_chat_id` also references chats, so an unqualified
+nested agent join is ambiguous in PostgREST and prevents sending queued replies.
+Live delivery checks must verify the outbox outcome, not only the sender's HTTP
+status: a successful batch response can include deliveries scheduled for retry.
