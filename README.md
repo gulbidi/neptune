@@ -19,7 +19,7 @@ Message the coding agents on your PC (Claude Code, Codex, …) from your phone. 
 npm ci
 ```
 
-Browser preview at http://localhost:1420. Add `?mode=bridge` or `?mode=phone`:
+Browser preview at http://localhost:1420. Use `?mode=bridge` for the simulated desktop console or `?mode=phone` for the phone client. The phone preview connects to the real backend:
 
 ```bash
 npm run dev
