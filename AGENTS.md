@@ -30,8 +30,9 @@ Work directly on `prod`, the only branch. Every change is tested locally, pushed
    git add -A
    ```
    ```bash
-   git commit -m "<what changed, imperative>"
+   git commit -F <message-file>
    ```
+   Write the message in the format under [Commit messages](#commit-messages).
    ```bash
    git push origin prod
    ```
@@ -40,7 +41,7 @@ Work directly on `prod`, the only branch. Every change is tested locally, pushed
    node scripts/bump.mjs X.Y.Z
    ```
    ```bash
-   git commit -am "Release X.Y.Z"
+   git commit -a -F <message-file>   # subject: chore: release X.Y.Z
    ```
    ```bash
    git tag vX.Y.Z
@@ -65,6 +66,45 @@ The version is `MAJOR.MINOR.PATCH`. Bump it from the latest `v*` tag (`git descr
 | Huge upgrade: redesign, new platform, breaking protocol or schema change | **Major** | 0.2.0 → 1.0.0 |
 
 If a batch mixes kinds of change, the largest one decides the bump.
+
+### Commit messages
+Every commit message follows this format:
+
+```
+<type>: <what-you-did>
+
+Co-Authored-By: Nandanunni <asnqln@gmail.com>
+Co-Authored-By: <agent> <model> <noreply@agent-domain>
+```
+
+The second line names the AI agent that did the work, one of:
+
+- `Co-Authored-By: Claude <model> <noreply@anthropic.com>`
+- `Co-Authored-By: Codex <model> <noreply@openai.com>`
+
+`<type>` is one of:
+
+| Type | Use for |
+| --- | --- |
+| `feat` | A new feature. |
+| `fix` | A bug fix. |
+| `chore` | Maintenance, tooling, dependencies and config. |
+| `docs` | Documentation only. |
+
+- Leave one blank line between the subject and the `Co-Authored-By` lines, with nothing after them. GitHub only reads co-authors from the last paragraph of the message; without the blank line they become part of the title and no co-authors are shown.
+- The first `Co-Authored-By` line is always `Nandanunni <asnqln@gmail.com>`.
+- When an AI agent (Claude or Codex) worked on the commit, add a second `Co-Authored-By` line for it. `<model>` is the model that actually did the work (e.g. `Opus 5.5`), so it changes with the model. Don't copy it from an old commit.
+- No other co-authors are added.
+- Release commits use `chore: release X.Y.Z`.
+
+Example:
+
+```
+feat: implemented email-otp authentication flow
+
+Co-Authored-By: Nandanunni <asnqln@gmail.com>
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+```
 
 ## Commands
 | Command | What it does |
