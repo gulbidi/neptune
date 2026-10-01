@@ -166,7 +166,7 @@ function Home({ session, email, others, onSwitch, onAddAccount, onAccountAdded, 
   const openRef = useRef(openId);
   openRef.current = openId;
 
-  const { chats, agents, nodes, loaded, live, putChat, refresh } = useChats(client, (m: Message) => {
+  const { chats, agents, nodes, loaded, live, putChat, dropChat, refresh } = useChats(client, (m: Message) => {
     if (usesNativePush()) return;
     if (m.sender === 'user') return;
     if (Date.parse(m.created_at) < startedAt.current) return;
@@ -232,6 +232,19 @@ function Home({ session, email, others, onSwitch, onAddAccount, onAccountAdded, 
     open(data as Chat);
   };
 
+  const rename = async (chat: Chat, title: string | null) => {
+    const { data, error } = await client.from('chats').update({ title }).eq('id', chat.id).select().single();
+    if (error) return onToast(error.message);
+    putChat(data as Chat);
+  };
+
+  const removeChat = async (chat: Chat) => {
+    const { error } = await client.from('chats').delete().eq('id', chat.id);
+    if (error) return onToast(error.message);
+    dropChat(chat.id);
+    onToast('Chat deleted');
+  };
+
   const removeNode = async (id: string) => {
     const { error } = await client.from('nodes').delete().eq('id', id);
     if (error) return onToast(error.message);
@@ -262,7 +275,8 @@ function Home({ session, email, others, onSwitch, onAddAccount, onAccountAdded, 
         agent={agents.find((a) => a.id === chat.agent_id)}
         nodes={nodes}
         onBack={back}
-        onDeleted={back}
+        onDeleted={() => { dropChat(chat.id); back(); }}
+        onRename={(title) => rename(chat, title)}
         onError={onToast}
       />
     );
@@ -279,6 +293,8 @@ function Home({ session, email, others, onSwitch, onAddAccount, onAccountAdded, 
       onUsage={() => show('usage')}
       onPair={() => show('pair')}
       onCreate={create}
+      onRename={rename}
+      onDelete={removeChat}
       onRemoveNode={removeNode}
       onSwitch={onSwitch}
       onAddAccount={onAddAccount}

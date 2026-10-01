@@ -81,7 +81,7 @@ Every 20 seconds the bridge upserts one `agents` row per CLI it found installed.
 ### Phone (Android)
 - **Several operator accounts** (for example home and work) signed in at once, with a switcher in the menu. Accounts you aren't viewing still send notifications.
 - **Chat list** across all agents and PCs, with a filter per agent. The header shows how many agents are online or paused. Agents are labelled "Claude · Work" when an account has several PCs.
-- **New chat** with any agent, continue any chat, or delete a chat.
+- **New chat** with any agent, continue any chat, or rename or delete a chat: long-press it in the list, or use the chat's menu. Clearing the name lets the next message name it again.
 - **Live activity bar** showing what the agent is doing, plus a **Stop** button (`/stop`) and cancel for queued messages.
 - **Commands:** `/new` starts a fresh agent session in this chat; `/status` shows the agent, model, PC, workspace, permissions and session.
 - **Usage screen:** each agent's plan limits as its CLI last reported them (Claude's 5-hour and weekly windows, Codex's primary and secondary windows), plus task count, tokens and API-equivalent cost for today, 7 days and 30 days.

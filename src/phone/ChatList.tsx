@@ -1,12 +1,45 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { agentLabel, isOnline, useNow } from '../lib/useConversation';
 import type { Agent, Chat, Node } from '../lib/types';
 import { MoreIcon, PlusIcon } from '../ui/icons';
 import { Reticle } from '../ui/Reticle';
 import { APP_VERSION } from '../lib/version';
 import { ago } from '../ui/time';
+import { ChatSheet } from './ChatSheet';
 
 const monogram = (name: string) => name.slice(0, 2).toUpperCase();
+const HOLD_MS = 500;
+
+/** Press-and-hold on touch, right-click on desktop. The tap that ends a hold doesn't also open the chat. */
+function useLongPress(onHold: (chat: Chat) => void) {
+  const timer = useRef<number>(undefined);
+  const held = useRef(false);
+  const cancel = () => window.clearTimeout(timer.current);
+  return (chat: Chat) => ({
+    onPointerDown: () => {
+      held.current = false;
+      cancel();
+      timer.current = window.setTimeout(() => {
+        held.current = true;
+        onHold(chat);
+      }, HOLD_MS);
+    },
+    onPointerUp: cancel,
+    onPointerLeave: cancel,
+    onPointerCancel: cancel,
+    onContextMenu: (e: MouseEvent) => {
+      e.preventDefault();
+      cancel();
+      if (!held.current) onHold(chat);
+      held.current = true;
+    },
+    held: () => {
+      const was = held.current;
+      held.current = false;
+      return was;
+    },
+  });
+}
 
 export function ChatList({
   email,
@@ -20,6 +53,8 @@ export function ChatList({
   onUsage,
   onPair,
   onCreate,
+  onRename,
+  onDelete,
   onRemoveNode,
   onSwitch,
   onAddAccount,
@@ -39,6 +74,8 @@ export function ChatList({
   onUsage: () => void;
   onPair: () => void;
   onCreate: (agentId: string) => void;
+  onRename: (chat: Chat, title: string | null) => void;
+  onDelete: (chat: Chat) => void;
   onRemoveNode: (nodeId: string) => void;
   onSwitch: (email: string) => void;
   onAddAccount: () => void;
@@ -52,6 +89,8 @@ export function ChatList({
   const [picker, setPicker] = useState(false);
   const [pcs, setPcs] = useState(false);
   const [confirm, setConfirm] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Chat | null>(null);
+  const press = useLongPress(setEditing);
   const label = (a: Agent | undefined) => agentLabel(a, nodes);
   const account = email.split('@')[0].toUpperCase();
 
@@ -134,8 +173,9 @@ export function ChatList({
           const agent = byId[c.agent_id];
           const working = !!agent && agent.current_chat_id === c.id && isOnline(agent, now);
           const name = label(agent);
+          const { held, ...hold } = press(c);
           return (
-            <button key={c.id} className={`chat-row ${working ? 'working' : ''}`} onClick={() => onOpen(c)}>
+            <button key={c.id} className={`chat-row ${working ? 'working' : ''}`} {...hold} onClick={() => !held() && onOpen(c)}>
               <span className={`agent-badge a-${agent?.kind}`}>
                 {monogram(agent?.name ?? '?')}
                 <i className={`led ${working ? 'busy' : isOnline(agent, now) ? (agent.paused ? 'paused' : 'on') : ''}`} />
@@ -185,6 +225,22 @@ export function ChatList({
             {!agents.length && <p className="sheet-empty">No agents yet. Pair a PC from the menu, then open Neptune on it.</p>}
           </div>
         </>
+      )}
+
+      {editing && (
+        <ChatSheet
+          chat={editing}
+          agentName={label(byId[editing.agent_id])}
+          onClose={() => setEditing(null)}
+          onRename={(title) => {
+            setEditing(null);
+            onRename(editing, title);
+          }}
+          onDelete={() => {
+            setEditing(null);
+            onDelete(editing);
+          }}
+        />
       )}
 
       {pcs && (

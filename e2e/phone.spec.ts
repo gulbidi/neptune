@@ -89,4 +89,74 @@ test.describe('phone app', () => {
     await page.getByRole('button', { name: 'Use a different email' }).click();
     await expect(page.getByPlaceholder('operator@gmail.com')).toBeVisible();
   });
+  test('renames and deletes chats from the list and from inside a chat', async ({ page, supabaseCalls }) => {
+    const email = 'home@example.com';
+    const at = new Date().toISOString();
+    const chat = (id: string, title: string) => ({ id, agent_id: 'agent', node_id: 'node', title, preview: null, last_sender: null, created_at: at, updated_at: at });
+    let chats = [chat('chat-1', 'Old name'), chat('chat-2', 'Scratch')];
+    const writes: { method: string; id: string | null; body: unknown }[] = [];
+    await page.addInitScript((email) => {
+      localStorage.setItem('neptune.accounts', JSON.stringify([email]));
+      localStorage.setItem('neptune.account', email);
+      localStorage.setItem(`neptune-auth:${email}`, JSON.stringify({
+        access_token: 'test-access-token', refresh_token: 'test-refresh-token', expires_at: 9999999999,
+        token_type: 'bearer', user: { id: email, email },
+      }));
+    }, email);
+    await page.route('https://api.github.com/**', (route) => route.fulfill({ status: 404 }));
+    await page.route(/supabase\.co\/rest\/v1\//, (route) => {
+      const req = route.request();
+      const url = new URL(req.url());
+      supabaseCalls.push(url.pathname);
+      if (url.pathname.endsWith('/chats')) {
+        const id = url.searchParams.get('id')?.replace('eq.', '') ?? null;
+        if (req.method() === 'PATCH') {
+          writes.push({ method: 'PATCH', id, body: req.postDataJSON() });
+          chats = chats.map((c) => (c.id === id ? { ...c, ...req.postDataJSON() } : c));
+          return route.fulfill({ json: chats.find((c) => c.id === id) });
+        }
+        if (req.method() === 'DELETE') {
+          writes.push({ method: 'DELETE', id, body: null });
+          chats = chats.filter((c) => c.id !== id);
+          return route.fulfill({ status: 204 });
+        }
+        return route.fulfill({ json: chats });
+      }
+      if (url.pathname.endsWith('/agents')) return route.fulfill({ json: [{ id: 'agent', node_id: 'node', name: 'Claude', kind: 'claude', online: false }] });
+      if (url.pathname.endsWith('/nodes')) return route.fulfill({ json: [{ id: 'node', name: 'Home', operator_email: email }] });
+      return route.fulfill({ json: [] });
+    });
+    await page.goto('/?mode=phone');
+
+    // A long press opens the sheet instead of the chat.
+    const row = page.locator('.chat-row', { hasText: 'Old name' });
+    await row.dispatchEvent('pointerdown');
+    await expect(page.getByRole('dialog', { name: 'Chat options' })).toBeVisible();
+    await row.dispatchEvent('pointerup');
+    await expect(page.getByRole('button', { name: 'Back to chats' })).toHaveCount(0);
+
+    const field = page.getByLabel('Chat name');
+    await expect(field).toHaveValue('Old name');
+    await expect(page.getByRole('button', { name: 'Save' })).toBeDisabled();
+    await field.fill('  Fixing   the build ');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.locator('.chat-row', { hasText: 'Fixing the build' })).toBeVisible();
+    expect(writes).toContainEqual({ method: 'PATCH', id: 'chat-1', body: { title: 'Fixing the build' } });
+
+    // Delete needs a second tap.
+    await page.locator('.chat-row', { hasText: 'Scratch' }).click({ button: 'right' });
+    await page.getByRole('button', { name: 'Delete chat' }).click();
+    expect(writes.some((w) => w.method === 'DELETE')).toBe(false);
+    await page.getByRole('button', { name: 'Tap again to delete' }).click();
+    await expect(page.locator('.chat-row', { hasText: 'Scratch' })).toHaveCount(0);
+    expect(writes).toContainEqual({ method: 'DELETE', id: 'chat-2', body: null });
+
+    // Inside a chat, the menu renames it too.
+    await page.locator('.chat-row', { hasText: 'Fixing the build' }).click();
+    await page.getByRole('button', { name: 'Menu', exact: true }).click();
+    await page.getByRole('button', { name: 'Rename chat' }).click();
+    await page.getByLabel('Chat name').fill('Release prep');
+    await page.getByLabel('Chat name').press('Enter');
+    await expect(page.getByText('// Release prep')).toBeVisible();
+  });
 });

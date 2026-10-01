@@ -9,6 +9,7 @@ import { ActivityBar } from '../ui/ActivityBar';
 import { BackIcon, MoreIcon } from '../ui/icons';
 import { Reticle } from '../ui/Reticle';
 import { ago } from '../ui/time';
+import { ChatSheet } from './ChatSheet';
 
 const SUGGESTIONS = [
   'What are you able to do on my PC?',
@@ -50,6 +51,7 @@ export function ChatScreen({
   nodes,
   onBack,
   onDeleted,
+  onRename,
   onError,
 }: {
   chat: Chat;
@@ -57,11 +59,13 @@ export function ChatScreen({
   nodes: Node[];
   onBack: () => void;
   onDeleted: () => void;
+  onRename: (title: string | null) => void;
   onError: (text: string) => void;
 }) {
   const now = useNow(1000);
   const [menu, setMenu] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
   const startedAt = useRef(Date.now());
   const client = useClient();
   const latency = useLatency(client);
@@ -140,6 +144,7 @@ export function ChatScreen({
                 <b>{chat.title || 'New chat'}</b>
                 {agent?.machine && <span>Bridge: {agent.machine}{agent.version ? ` · v${agent.version}` : ''}</span>}
               </div>
+              <button onClick={() => { setMenu(false); setEditing(true); }}>Rename chat</button>
               <button onClick={() => { setMenu(false); send('/status').catch(() => {}); }}>Agent status</button>
               <button onClick={() => { setMenu(false); send('/new').catch(() => {}); }}>Fresh session in this chat</button>
               <button
@@ -157,6 +162,22 @@ export function ChatScreen({
           </>
         )}
       </header>
+
+      {editing && (
+        <ChatSheet
+          chat={chat}
+          agentName={name}
+          onClose={() => setEditing(false)}
+          onRename={(title) => {
+            setEditing(false);
+            onRename(title);
+          }}
+          onDelete={() => {
+            setEditing(false);
+            remove();
+          }}
+        />
+      )}
 
       <div className="hud">
         <div>

@@ -619,3 +619,15 @@ html.scanning #root { visibility: hidden; }
 }
 .pc-row .mini.danger { color: var(--danger); border-color: rgba(244, 63, 94, 0.45); background: rgba(244, 63, 94, 0.1); }
 .sheet-empty { margin: 4px 10px 10px; color: var(--muted); font-size: 13px; }
+
+/* ---------- rename / delete a chat ---------- */
+.chat-sheet .rename { display: flex; gap: 8px; padding: 0 10px 6px; }
+.chat-sheet .plain-input { height: 44px; margin: 0; padding: 0 12px; text-align: left; }
+.chat-sheet .mini {
+  flex: none; width: auto; justify-content: center; padding: 0 16px; border-radius: var(--radius);
+  border: 1px solid var(--border-strong); background: var(--blue-soft); color: var(--blue-hi);
+  font: 600 11px var(--mono); letter-spacing: 0.1em; text-transform: uppercase;
+}
+.chat-sheet .mini:disabled { opacity: 0.4; }
+.chat-sheet .delete { color: var(--danger); font: 600 12px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+.chat-sheet .delete.armed { background: rgba(244, 63, 94, 0.1); }

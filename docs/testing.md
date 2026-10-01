@@ -52,7 +52,7 @@ compiles native code without publishing. On-device push checks are listed in
   | Project | Size | Specs | Covers |
   | --- | --- | --- | --- |
   | `desktop` | Desktop Chrome | `e2e/bridge.spec.ts` | `?mode=bridge` console, `?mode=bridge&pair` pairing screen |
-  | `phone` | Pixel 7 | `e2e/phone.spec.ts` | `?mode=phone` sign-in flow |
+  | `phone` | Pixel 7 | `e2e/phone.spec.ts` | `?mode=phone` sign-in, push taps, renaming and deleting chats |
 
 - **Production is never touched.** `e2e/fixtures.ts` intercepts every request to Supabase:
   - The `pair` and `request-code` edge functions return canned replies (`PAIR` holds the fake pairing code).

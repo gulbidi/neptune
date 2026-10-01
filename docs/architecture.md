@@ -89,8 +89,9 @@ src/
 │   ├── client.ts         ClientContext and useClient() for the active account
 │   ├── AuthScreen.tsx    Email → request-code → scan or type the QR code → verifyOtp
 │   ├── PairScreen.tsx    Scan the PC's pair QR → peek → name and emails → approve (may sign in a new operator)
-│   ├── ChatList.tsx      Chat list, agent filter, new chat, menu (accounts, PCs sheet, pair, usage, sign out)
-│   ├── ChatScreen.tsx    One chat: messages, activity bar, composer, cancel, delete, latency
+│   ├── ChatList.tsx      Chat list, agent filter, new chat, long-press a row for ChatSheet, menu (accounts, PCs sheet, pair, usage, sign out)
+│   ├── ChatScreen.tsx    One chat: messages, activity bar, composer, cancel, rename, delete, latency
+│   ├── ChatSheet.tsx     Rename or delete one chat (chatTitle.ts tidies the name)
 │   ├── UsageScreen.tsx   Plan-limit windows per agent, plus token and cost totals from message meta
 │   └── scan.tsx          Barcode-scanner wrapper (transparent webview + overlay; cancel workaround)
 └── bridge/               Windows desktop bridge
